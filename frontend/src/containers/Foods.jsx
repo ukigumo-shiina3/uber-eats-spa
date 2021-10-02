@@ -1,10 +1,11 @@
-import React, { Fragment, useReducer, useEffect } from "react";
+import React, { Fragment, useReducer, useEffect, useState } from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 
 // components
 import { LocalMallIcon } from "../components/Icons";
 import { FoodWrapper } from "../components/FoodWrapper";
+import { FoodOrderDialog } from "../components/FoodOrderDialog";
 import Skeleton from "@material-ui/lab/Skeleton";
 
 // reducers
@@ -54,9 +55,20 @@ const ItemWrapper = styled.div`
   margin: 16px;
 `;
 
+const submitOrder = () => {
+  console.log("登録ボタンが押された！");
+};
+
 export const Foods = ({ match }) => {
   console.log(Foods);
   const [foodsState, dispatch] = useReducer(foodsReducer, foodsInitialState);
+
+  const initialState = {
+    isOpenOrderDialog: false,
+    selectedFood: null,
+    selectedFoodCount: 1,
+  };
+  const [state, setState] = useState(initialState);
 
   useEffect(() => {
     dispatch({ type: foodsActionTyps.FETCHING });
@@ -83,6 +95,35 @@ export const Foods = ({ match }) => {
         </BagIconWrapper>
       </HeaderWrapper>
       <FoodsList>
+        {state.isOpenOrderDialog && (
+          <FoodOrderDialog
+            isOpen={state.isOpenOrderDialog}
+            food={state.selectedFood}
+            countNumber={state.selectedFoodCount}
+            onClickCountUp={() =>
+              setState({
+                ...state,
+                selectedFoodCount: state.selectedFoodCount + 1,
+              })
+            }
+            onClickCountDown={() =>
+              setState({
+                ...state,
+                selectedFoodCount: state.selectedFoodCount - 1,
+              })
+            }
+            onClickOrder={() => submitOrder()}
+            // モーダルを閉じる時はすべてのstateを初期化する
+            onClose={() =>
+              setState({
+                ...state,
+                isOpenOrderDialog: false,
+                selectedFood: null,
+                selectedFoodCount: 1,
+              })
+            }
+          />
+        )}
         {foodsState.fetchState === REQUEST_STATE.LOADING ? (
           <Fragment>
             {[...Array(12).keys()].map((i) => (
@@ -96,7 +137,13 @@ export const Foods = ({ match }) => {
             <ItemWrapper key={food.id}>
               <FoodWrapper
                 food={food}
-                onClickFoodWrapper={(food) => console.log(food)}
+                onClickFoodWrapper={(food) =>
+                  setState({
+                    ...state,
+                    isOpenOrderDialog: true,
+                    selectedFood: food,
+                  })
+                }
                 imageUrl={FoodImage}
               />
             </ItemWrapper>
